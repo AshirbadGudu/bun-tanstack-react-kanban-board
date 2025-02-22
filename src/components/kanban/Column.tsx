@@ -14,6 +14,7 @@ interface ColumnProps {
   tasks: Task[];
   onAddClick: () => void;
   onDeleteTask: (id: string) => void;
+  onEditTask: (task: Task) => void;
 }
 
 export function Column({
@@ -21,6 +22,7 @@ export function Column({
   tasks,
   onAddClick,
   onDeleteTask,
+  onEditTask,
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -66,7 +68,12 @@ export function Column({
             strategy={verticalListSortingStrategy}
           >
             {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} onDelete={onDeleteTask} />
+              <TaskCard
+                key={task.id}
+                task={task}
+                onDelete={onDeleteTask}
+                onEdit={onEditTask}
+              />
             ))}
             {tasks.length === 0 && isOver && (
               <Box

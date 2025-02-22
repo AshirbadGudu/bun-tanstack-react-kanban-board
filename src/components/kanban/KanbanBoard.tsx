@@ -46,11 +46,19 @@ const dropAnimation = {
 };
 
 export function KanbanBoard() {
-  const { tasks, columns, addTask, deleteTask, moveTask, reorderTasks } =
-    useKanbanStore();
+  const {
+    tasks,
+    columns,
+    addTask,
+    deleteTask,
+    moveTask,
+    reorderTasks,
+    editTask,
+  } = useKanbanStore();
   const [openDialog, setOpenDialog] = React.useState(false);
   const [activeTask, setActiveTask] = React.useState<Task | null>(null);
-  const [newTaskData, setNewTaskData] = React.useState({
+  const [editingTask, setEditingTask] = React.useState<Task | null>(null);
+  const [taskData, setTaskData] = React.useState({
     title: "",
     description: "",
     columnId: "",
@@ -71,21 +79,42 @@ export function KanbanBoard() {
   );
 
   const handleOpenDialog = (columnId: string) => {
-    setNewTaskData({ title: "", description: "", columnId });
+    setTaskData({ title: "", description: "", columnId });
+    setEditingTask(null);
+    setOpenDialog(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setTaskData({
+      title: task.title,
+      description: task.description || "",
+      columnId: task.column,
+    });
+    setEditingTask(task);
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    setEditingTask(null);
+    setTaskData({ title: "", description: "", columnId: "" });
   };
 
-  const handleAddTask = () => {
-    if (newTaskData.title.trim()) {
-      addTask({
-        title: newTaskData.title.trim(),
-        description: newTaskData.description.trim(),
-        column: newTaskData.columnId,
-      });
+  const handleSaveTask = () => {
+    if (taskData.title.trim()) {
+      if (editingTask) {
+        editTask(editingTask.id, {
+          title: taskData.title.trim(),
+          description: taskData.description.trim(),
+          column: taskData.columnId,
+        });
+      } else {
+        addTask({
+          title: taskData.title.trim(),
+          description: taskData.description.trim(),
+          column: taskData.columnId,
+        });
+      }
       handleCloseDialog();
     }
   };
@@ -187,13 +216,18 @@ export function KanbanBoard() {
               tasks={tasks.filter((task: Task) => task.column === column.id)}
               onAddClick={() => handleOpenDialog(column.id)}
               onDeleteTask={deleteTask}
+              onEditTask={handleEditTask}
             />
           ))}
         </Grid>
 
         <DragOverlay dropAnimation={dropAnimation}>
           {activeTask ? (
-            <TaskCard task={activeTask} onDelete={deleteTask} />
+            <TaskCard
+              task={activeTask}
+              onDelete={deleteTask}
+              onEdit={handleEditTask}
+            />
           ) : null}
         </DragOverlay>
 
@@ -203,16 +237,18 @@ export function KanbanBoard() {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Add New Task</DialogTitle>
+          <DialogTitle>
+            {editingTask ? "Edit Task" : "Add New Task"}
+          </DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
               margin="dense"
               label="Task Title"
               fullWidth
-              value={newTaskData.title}
+              value={taskData.title}
               onChange={(e) =>
-                setNewTaskData({ ...newTaskData, title: e.target.value })
+                setTaskData({ ...taskData, title: e.target.value })
               }
               sx={{ mb: 2 }}
             />
@@ -222,16 +258,16 @@ export function KanbanBoard() {
               fullWidth
               multiline
               rows={3}
-              value={newTaskData.description}
+              value={taskData.description}
               onChange={(e) =>
-                setNewTaskData({ ...newTaskData, description: e.target.value })
+                setTaskData({ ...taskData, description: e.target.value })
               }
             />
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button onClick={handleAddTask} variant="contained">
-              Add Task
+            <Button onClick={handleSaveTask} variant="contained">
+              {editingTask ? "Save Changes" : "Add Task"}
             </Button>
           </DialogActions>
         </Dialog>

@@ -16,6 +16,7 @@ export interface KanbanStore {
   addTask: (task: Omit<Task, "id">) => void;
   deleteTask: (taskId: string) => void;
   moveTask: (taskId: string, targetColumn: string) => void;
+  editTask: (taskId: string, updates: Partial<Omit<Task, "id">>) => void;
   reorderTasks: (newTasks: Task[]) => void;
   columns: Column[];
 }

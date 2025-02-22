@@ -1,8 +1,20 @@
 import * as React from "react";
-import { Card, CardContent, Typography, IconButton, Box } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Typography,
+  IconButton,
+  Box,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
 import {
   Delete as DeleteIcon,
   DragIndicator as DragIcon,
+  MoreVert as MoreIcon,
+  Edit as EditIcon,
 } from "@mui/icons-material";
 import type { Task } from "../../types/kanban";
 import { useSortable } from "@dnd-kit/sortable";
@@ -11,9 +23,13 @@ import { CSS } from "@dnd-kit/utilities";
 interface TaskCardProps {
   task: Task;
   onDelete: (id: string) => void;
+  onEdit: (task: Task) => void;
 }
 
-export function TaskCard({ task, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onDelete, onEdit }: TaskCardProps) {
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
   const {
     attributes,
     listeners,
@@ -27,6 +43,25 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleEdit = () => {
+    handleMenuClose();
+    onEdit(task);
+  };
+
+  const handleDelete = () => {
+    handleMenuClose();
+    onDelete(task.id);
   };
 
   return (
@@ -66,18 +101,40 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
           </Box>
           <IconButton
             size="small"
-            color="error"
-            onClick={() => onDelete(task.id)}
+            onClick={handleMenuClick}
             sx={{
               position: "absolute",
               top: 8,
               right: 8,
+              color: "text.secondary",
             }}
           >
-            <DeleteIcon />
+            <MoreIcon />
           </IconButton>
         </Box>
       </CardContent>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleMenuClose}
+        onClick={(e) => e.stopPropagation()}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      >
+        <MenuItem onClick={handleEdit}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDelete}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText sx={{ color: "error.main" }}>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
     </Card>
   );
 }
