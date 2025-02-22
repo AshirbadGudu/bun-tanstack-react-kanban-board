@@ -17,42 +17,17 @@ import {
   Grid,
 } from "@mui/material";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
-
-interface Task {
-  id: string;
-  title: string;
-  column: string;
-  description?: string;
-}
-
-interface Column {
-  id: string;
-  title: string;
-  color: string;
-}
+import { useKanbanStore } from "../../store/kanbanStore";
+import type { Column, Task } from "../../types/kanban";
 
 export function KanbanBoard() {
-  const [tasks, setTasks] = React.useState<Task[]>(() => {
-    const savedTasks = localStorage.getItem("kanbanTasks");
-    return savedTasks ? JSON.parse(savedTasks) : [];
-  });
-
+  const { tasks, columns, addTask, deleteTask } = useKanbanStore();
   const [openDialog, setOpenDialog] = React.useState(false);
   const [newTaskData, setNewTaskData] = React.useState({
     title: "",
     description: "",
     columnId: "",
   });
-
-  const columns: Column[] = [
-    { id: "todo", title: "To Do", color: "#ffebee" },
-    { id: "inProgress", title: "In Progress", color: "#e3f2fd" },
-    { id: "done", title: "Done", color: "#e8f5e9" },
-  ];
-
-  React.useEffect(() => {
-    localStorage.setItem("kanbanTasks", JSON.stringify(tasks));
-  }, [tasks]);
 
   const handleOpenDialog = (columnId: string) => {
     setNewTaskData({ title: "", description: "", columnId });
@@ -65,21 +40,13 @@ export function KanbanBoard() {
 
   const handleAddTask = () => {
     if (newTaskData.title.trim()) {
-      setTasks((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          title: newTaskData.title.trim(),
-          description: newTaskData.description.trim(),
-          column: newTaskData.columnId,
-        },
-      ]);
+      addTask({
+        title: newTaskData.title.trim(),
+        description: newTaskData.description.trim(),
+        column: newTaskData.columnId,
+      });
       handleCloseDialog();
     }
-  };
-
-  const deleteTask = (taskId: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
   };
 
   return (
@@ -95,7 +62,7 @@ export function KanbanBoard() {
       </Typography>
 
       <Grid container spacing={3}>
-        {columns.map((column) => (
+        {columns.map((column: Column) => (
           <Grid item xs={12} md={4} key={column.id}>
             <Paper
               elevation={2}
@@ -112,8 +79,8 @@ export function KanbanBoard() {
 
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {tasks
-                  .filter((task) => task.column === column.id)
-                  .map((task) => (
+                  .filter((task: Task) => task.column === column.id)
+                  .map((task: Task) => (
                     <Fade in key={task.id}>
                       <Card sx={{ position: "relative" }}>
                         <CardContent>
