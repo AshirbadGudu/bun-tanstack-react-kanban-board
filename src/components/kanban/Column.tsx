@@ -22,7 +22,7 @@ export function Column({
   onAddClick,
   onDeleteTask,
 }: ColumnProps) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
 
@@ -37,6 +37,9 @@ export function Column({
           minHeight: "70vh",
           display: "flex",
           flexDirection: "column",
+          transition: "all 0.2s ease",
+          outline: isOver ? "2px dashed rgba(0, 0, 0, 0.2)" : "none",
+          outlineOffset: "-8px",
         }}
       >
         <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
@@ -51,6 +54,11 @@ export function Column({
             flexDirection: "column",
             gap: 2,
             minHeight: 200,
+            p: 1,
+            mx: -1,
+            borderRadius: 1,
+            backgroundColor: isOver ? "rgba(0, 0, 0, 0.04)" : "transparent",
+            transition: "background-color 0.2s ease",
           }}
         >
           <SortableContext
@@ -60,6 +68,21 @@ export function Column({
             {tasks.map((task) => (
               <TaskCard key={task.id} task={task} onDelete={onDeleteTask} />
             ))}
+            {tasks.length === 0 && isOver && (
+              <Box
+                sx={{
+                  height: 100,
+                  border: "2px dashed rgba(0, 0, 0, 0.1)",
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "text.secondary",
+                }}
+              >
+                Drop here
+              </Box>
+            )}
           </SortableContext>
         </Box>
 

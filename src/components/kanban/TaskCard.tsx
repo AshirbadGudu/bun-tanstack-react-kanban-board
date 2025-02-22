@@ -1,6 +1,9 @@
 import * as React from "react";
 import { Card, CardContent, Typography, IconButton, Box } from "@mui/material";
-import { Delete as DeleteIcon } from "@mui/icons-material";
+import {
+  Delete as DeleteIcon,
+  DragIndicator as DragIcon,
+} from "@mui/icons-material";
 import type { Task } from "../../types/kanban";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -24,7 +27,6 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    cursor: "grab",
   };
 
   return (
@@ -38,31 +40,43 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
         },
       }}
       {...attributes}
-      {...listeners}
     >
       <CardContent>
-        <Box sx={{ pr: 4 }}>
-          <Typography variant="h6" component="div" gutterBottom>
-            {task.title}
-          </Typography>
-          {task.description && (
-            <Typography variant="body2" color="text.secondary">
-              {task.description}
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+          <IconButton
+            size="small"
+            sx={{
+              cursor: "grab",
+              color: "text.secondary",
+              "&:hover": { backgroundColor: "transparent" },
+            }}
+            {...listeners}
+          >
+            <DragIcon />
+          </IconButton>
+          <Box sx={{ flex: 1, pr: 4 }}>
+            <Typography variant="h6" component="div" gutterBottom>
+              {task.title}
             </Typography>
-          )}
+            {task.description && (
+              <Typography variant="body2" color="text.secondary">
+                {task.description}
+              </Typography>
+            )}
+          </Box>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => onDelete(task.id)}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+            }}
+          >
+            <DeleteIcon />
+          </IconButton>
         </Box>
-        <IconButton
-          size="small"
-          color="error"
-          onClick={() => onDelete(task.id)}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-          }}
-        >
-          <DeleteIcon />
-        </IconButton>
       </CardContent>
     </Card>
   );

@@ -33,6 +33,10 @@ export const useKanbanStore = create<KanbanStore>()(
             task.id === taskId ? { ...task, column: targetColumn } : task
           ),
         })),
+      reorderTasks: (newTasks) =>
+        set(() => ({
+          tasks: newTasks,
+        })),
     }),
     {
       name: "kanban-storage",

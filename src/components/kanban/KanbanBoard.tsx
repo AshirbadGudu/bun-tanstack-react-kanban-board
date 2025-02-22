@@ -23,16 +23,33 @@ import {
   DndContext,
   DragEndEvent,
   DragOverEvent,
+  DragStartEvent,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
 import { Column as ColumnComponent } from "./Column";
+import { TaskCard } from "./TaskCard";
+import { arrayMove } from "@dnd-kit/sortable";
+
+const dropAnimation = {
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: {
+      active: {
+        opacity: "0.5",
+      },
+    },
+  }),
+};
 
 export function KanbanBoard() {
-  const { tasks, columns, addTask, deleteTask, moveTask } = useKanbanStore();
+  const { tasks, columns, addTask, deleteTask, moveTask, reorderTasks } =
+    useKanbanStore();
   const [openDialog, setOpenDialog] = React.useState(false);
+  const [activeTask, setActiveTask] = React.useState<Task | null>(null);
   const [newTaskData, setNewTaskData] = React.useState({
     title: "",
     description: "",
@@ -73,6 +90,14 @@ export function KanbanBoard() {
     }
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const activeTask = tasks.find((task) => task.id === active.id);
+    if (activeTask) {
+      setActiveTask(activeTask);
+    }
+  };
+
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
@@ -81,16 +106,31 @@ export function KanbanBoard() {
     const overId = over.id as string;
 
     // Find the task being dragged
-    const task = tasks.find((t) => t.id === activeId);
-    if (!task) return;
+    const activeTask = tasks.find((t) => t.id === activeId);
+    if (!activeTask) return;
 
-    // If hovering over a column and it's different from the current column
-    if (columns.some((col) => col.id === overId) && task.column !== overId) {
-      moveTask(activeId, overId);
+    // If hovering over a column
+    if (columns.some((col) => col.id === overId)) {
+      if (activeTask.column !== overId) {
+        moveTask(activeId, overId);
+      }
+      return;
+    }
+
+    // If hovering over another task
+    const overTask = tasks.find((t) => t.id === overId);
+    if (!overTask || overTask.column !== activeTask.column) return;
+
+    const activeIndex = tasks.findIndex((t) => t.id === activeId);
+    const overIndex = tasks.findIndex((t) => t.id === overId);
+
+    if (activeIndex !== overIndex) {
+      reorderTasks(arrayMove(tasks, activeIndex, overIndex));
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveTask(null);
     const { active, over } = event;
     if (!over) return;
 
@@ -98,18 +138,33 @@ export function KanbanBoard() {
     const overId = over.id as string;
 
     // Find the task being dragged
-    const task = tasks.find((t) => t.id === activeId);
-    if (!task) return;
+    const activeTask = tasks.find((t) => t.id === activeId);
+    if (!activeTask) return;
 
-    // If dropped over a column and it's different from the current column
-    if (columns.some((col) => col.id === overId) && task.column !== overId) {
-      moveTask(activeId, overId);
+    // If dropped over a column
+    if (columns.some((col) => col.id === overId)) {
+      if (activeTask.column !== overId) {
+        moveTask(activeId, overId);
+      }
+      return;
+    }
+
+    // If dropped over another task
+    const overTask = tasks.find((t) => t.id === overId);
+    if (!overTask || overTask.column !== activeTask.column) return;
+
+    const activeIndex = tasks.findIndex((t) => t.id === activeId);
+    const overIndex = tasks.findIndex((t) => t.id === overId);
+
+    if (activeIndex !== overIndex) {
+      reorderTasks(arrayMove(tasks, activeIndex, overIndex));
     }
   };
 
   return (
     <DndContext
       sensors={sensors}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
     >
@@ -135,6 +190,12 @@ export function KanbanBoard() {
             />
           ))}
         </Grid>
+
+        <DragOverlay dropAnimation={dropAnimation}>
+          {activeTask ? (
+            <TaskCard task={activeTask} onDelete={deleteTask} />
+          ) : null}
+        </DragOverlay>
 
         <Dialog
           open={openDialog}
